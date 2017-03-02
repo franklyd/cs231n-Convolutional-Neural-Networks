@@ -1,5 +1,4 @@
 import numpy as np
-from operator import itemgetter
 
 class KNearestNeighbor(object):
   """ a kNN classifier with L2 distance """
@@ -95,7 +94,8 @@ class KNearestNeighbor(object):
       # Compute the l2 distance between the ith test point and all training #
       # points, and store the result in dists[i, :].                        #
       #######################################################################
-      dists[i] = np.sum(np.square(self.X_train - X[i]),axis=1)
+      dists[i] = np.sum(np.square(self.X_train - X[i])
+      	,axis=1)
       #######################################################################
       #                         END OF YOUR CODE                            #
       #######################################################################
@@ -181,4 +181,12 @@ class KNearestNeighbor(object):
       #########################################################################
 
     return y_pred
-
+    
+  def k_neighbors(self,dists,k):
+    num_test = dists.shape[0]
+    y_closest = np.zeros(num_test,k)
+    for i in xrange(num_test):
+      sorted_index = np.argsort(dists[i,:])
+      closest_index = sorted_index[:k]
+      y_closest[i] = self.y_train[closest_index]
+    return y_closest
