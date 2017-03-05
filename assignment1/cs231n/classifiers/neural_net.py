@@ -74,7 +74,11 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    # W1: D*H b1: (H,) W2:H*C b2: (C,) X: N*D
+    hidden_dot = X.dot(W1) + b1
+    hidden_output = np.maximum(0,hidden_dot) # size: N*H
+    scores = hidden_output.dot(W2) +b2   # size: (N,C)
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -92,7 +96,16 @@ class TwoLayerNet(object):
     # classifier loss. So that your results match ours, multiply the            #
     # regularization loss by 0.5                                                #
     #############################################################################
-    pass
+    # Calculate data loss
+    scores_centred = scores - np.max(scores,axis=1).reshape((N,1))
+    correct_class_score = scores_centred[np.arange(N),y]
+    soft_max_loss = np.divide(np.exp(correct_class_score) , np.sum(np.exp(scores_centred),axis=1))
+    data_loss = np.sum(-np.log(soft_max_loss))
+    data_loss /= N
+    # Calculate regularization loss
+    reg_loss = 0.5 * reg * (np.sum(W1 * W1) + np.sum(W2*W2))
+    loss = data_loss + reg_loss
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -104,7 +117,26 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    # back1: scores(N,C) -> out_put layer(softmax) dSoft: N*C
+    dSoft = np.divide(np.exp(scores),np.sum(np.exp(scores),axis=1).reshape((N,1)))
+    dSoft[np.arange(N),y] += -1
+    # back2: output layer input(N*H) -> scores function: hidden_output*W2 +b2 (N*C)
+    ##  2(a): Out:N*H dSoft: N*C dW2: H*C
+    dW2 = hidden_output.T.dot(dSoft)
+    db2 = np.sum(dSoft,axis=0)
+    ##  2(b) W2: H*C dSoft: N*C dH_out: N*H
+    dH_out = dSoft.dot(W2.T)
+    ## back3: ReLu N*H
+    dRelu = dH_out
+    dRelu[hidden_dot<0] = 0
+    # back4: inputX(N*D) -> hidden output(N*H) dW1: D*H
+    db1 = np.sum(dRelu,axis=0)
+    dW1 = X.T.dot(dRelu)
+
+    grads['W1'] = dW1/N + reg*W1
+    grads['W2'] = dW2/N + reg*W2
+    grads['b1'] = db1/N
+    grads['b2'] = db2/N
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
