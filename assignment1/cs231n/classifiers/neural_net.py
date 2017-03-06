@@ -180,7 +180,9 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      pass
+      batch_index = np.random.choice(num_train,batch_size,replace=True)
+      X_batch = X[batch_index]
+      y_batch = y[batch_index]
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -195,7 +197,8 @@ class TwoLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      pass
+      for W in grads:
+        self.params[W] -= learning_rate*grads[W]
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -240,7 +243,12 @@ class TwoLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+    W1, b1 = self.params['W1'], self.params['b1']
+    W2, b2 = self.params['W2'], self.params['b2']
+    hidden_dot = X.dot(W1) + b1
+    hidden_output = np.maximum(0,hidden_dot) # size: N*H
+    scores = hidden_output.dot(W2) +b2   # size: (N,C)
+    y_pred = np.argmax(scores,axis=1)
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
