@@ -19,7 +19,7 @@ class TwoLayerNet(object):
   The learnable parameters of the model are stored in the dictionary
   self.params that maps parameter names to numpy arrays.
   """
-  
+  # constructor for Python
   def __init__(self, input_dim=3*32*32, hidden_dim=100, num_classes=10,
                weight_scale=1e-3, reg=0.0):
     """
@@ -45,7 +45,11 @@ class TwoLayerNet(object):
     # weights and biases using the keys 'W1' and 'b1' and second layer weights #
     # and biases using the keys 'W2' and 'b2'.                                 #
     ############################################################################
-    pass
+    self.params['W1'] = np.random.normal(0,weight_scale,[input_dim,hidden_dim])
+    self.params['b1'] = np.zeros(hidden_dim)
+
+    self.params['W2'] = np.random.normal(0,weight_scale,[hidden_dim,num_classes])
+    self.params['b2'] = np.zeros(num_classes)
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -75,7 +79,12 @@ class TwoLayerNet(object):
     # TODO: Implement the forward pass for the two-layer net, computing the    #
     # class scores for X and storing them in the scores variable.              #
     ############################################################################
-    pass
+    W1 = self.params['W1']
+    W2 = self.params['W2']
+    #forward
+    hidden_out, hidden_cache = affine_relu_forward(X, W1, self.params['b1'])
+    output_out,output_cache =  affine_forward(hidden_out,W2,self.params['b2'])
+    scores = output_out
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -95,7 +104,15 @@ class TwoLayerNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    pass
+    loss,dloss = softmax_loss(scores,y)
+    loss += 0.5* self.reg * (np.sum(W1 * W1) + np.sum(W2*W2))
+    #back propagate
+    doutput, grads['W2'], grads['b2'] = affine_backward(dloss,output_cache) 
+    _, grads['W1'],grads['b1'] = affine_relu_backward(doutput,hidden_cache)
+
+    #regulation
+    grads['W1'] += self.reg * W1
+    grads['W2'] += self.reg * W2 
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
