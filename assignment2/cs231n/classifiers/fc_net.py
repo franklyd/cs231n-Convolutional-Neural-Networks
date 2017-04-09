@@ -253,6 +253,7 @@ class FullyConnectedNet(object):
     hidden_out = {}
     hidden_out[0] = X
     hidden_cache = {}
+    dropout_cache = {}
     # Forward pass: hidden layers
     for i in range(self.num_layers-1):
       W = self.params['W'+str(i+1)]
@@ -263,6 +264,10 @@ class FullyConnectedNet(object):
         hidden_out[i+1], hidden_cache[i+1] = self.affine_bn_relu_forward(hidden_out[i], W, b, gamma, beta, self.bn_params[i])
       else:
         hidden_out[i+1], hidden_cache[i+1] = affine_relu_forward(hidden_out[i], W,b)
+      # Perform dropout after each ReLU output  
+      if self.use_dropout:
+        hidden_out[i+1], dropout_cache[i+1] = dropout_forward(hidden_out[i+1], self.dropout_param)
+
     # Forward pass: output layer
       W = self.params['W'+str(self.num_layers)]
       b = self.params['b'+str(self.num_layers)]
@@ -298,13 +303,15 @@ class FullyConnectedNet(object):
     # Back propagate
     d, grads['W'+str(self.num_layers)], grads['b'+str(self.num_layers)] = affine_backward(dloss, output_cache)
 
-    if self.use_batchnorm:
-      for i in range(self.num_layers-1):
+    for i in range(self.num_layers-1):
+      # Perform dropout backward
+      if self.use_dropout:
+        d = dropout_backward(d, dropout_cache[self.num_layers-i-1])
+      if self.use_batchnorm:
         d, grads['W'+str(self.num_layers-i-1)], grads['b'+str(self.num_layers-i-1)], grads['gamma'+str(self.num_layers-i-1)], grads['beta'+str(self.num_layers-i-1)] = self.affine_bn_relu_backward(d, hidden_cache[self.num_layers-i-1])
-
-    else:
-      for i in range(self.num_layers-1):
+      else:
         d, grads['W'+str(self.num_layers-i-1)], grads['b'+str(self.num_layers-i-1)] = affine_relu_backward(d,hidden_cache[self.num_layers-i-1])
+
 
     # Regularization
     for i in range(self.num_layers):
